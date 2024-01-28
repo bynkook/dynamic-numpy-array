@@ -7,7 +7,8 @@ expands both when you read and write
  - create  
  - read & write  
  - clear(fill with zeros)
- - and all other numpy operations as well  
+ - algebric operations
+ - add custom method for specific need
   
 # examples:  
 arr = DynArrNp2d((4,4), "float32")  
