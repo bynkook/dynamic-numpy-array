@@ -98,8 +98,6 @@ class DynArrNp1d:
 
     def _resize(self, size):
 
-        # np.resize 는 array 값을 반복하기 때문에 사용하지 않는다.
-        # np.pad 는 확장된 공간을 0으로 채워 사이즈를 증가시킨다.
         self.A = np.pad(self.A, (0, size))
         self.n = len(self.A)
         print("Info : array resized")
@@ -218,8 +216,6 @@ class DynArrNp2d:
 
     def _resize(self, axis, size):
 
-        # np.resize 는 array 값을 반복하기 때문에 사용하지 않는다.
-        # np.pad 는 확장된 공간을 0으로 채워 사이즈를 증가시킨다.
         if axis == 0: self.A = np.pad(self.A, ((0, size),(0, 0)))    # pad row
         if axis == 1: self.A = np.pad(self.A, ((0, 0),(0, size)))    # pad col
         self.size = tuple(map(int, self.A.shape))
