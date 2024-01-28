@@ -229,11 +229,6 @@ class DynArrNp2d:
 
         return np.zeros(self.size, self.dtype)
 
-    def append(self, value):
-
-        self.A = np.append(self.A, value)
-        self.size = tuple(map(int, self.A.shape))
-
     def clear(self):
 
         self.A = np.zeros_like(self.A)
