@@ -6,7 +6,8 @@ expands both when you read and write
 # you can do:  
  - create  
  - read & write  
- - clear(fill with zeros)  
+ - clear(fill with zeros)
+ - and all other numpy operations as well  
   
 # examples:  
 arr = DynArrNp2d((4,4), "float32")  
