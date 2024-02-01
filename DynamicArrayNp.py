@@ -52,6 +52,11 @@ class DynArrNp1d:
             if isinstance(key, slice):
                 # this is to handle None, negative and out-of-bound index
                 self._dynamic_array_resize(key)
+            elif isinstance(key, np.ndarray):
+                # this is to handle numpy array as index
+                key[key < 0] += self.n
+                while (key > self.n - 1).any():
+                    self._resize(int(2 * self.n))
             else:
                 # handling negative single index
                 if key < 0:
@@ -236,44 +241,21 @@ if __name__ == "__main__":
     #
 
     arr = DynArrNp1d(10,"float32")
-    print(f"array length = {len(arr)}\n", arr)
     arr[50:54] += [10,20,30,40]
-    print(f"array length = {len(arr)}\n", arr)
     arr[-150:-154:-1] += [-10,-20,-30,-40]
-    print(f"array length = {len(arr)}\n", arr)
     arr.trimtrailzero()
-    print(f"array length = {len(arr)}\n", arr)
-    
+
+    key = np.arange(30, 50)
+    arr = DynArrNp1d(10, "int32")
+    arr[key] = 1
+
     #
     # this is to see numpy 2d array working
     #
 
-    arr = np.arange(16).reshape(4,4)
-    print(arr)
-    print(arr.size)
-    print(arr.shape)
-
     arr = DynArrNp2d((4,4), "float32")
-    print(arr)
-    print(arr.size)
-    arr._resize(0, 5)
-    print(arr)
-    print(arr.size)
-    arr._resize(1, 2)
-    print(arr)
-    print(arr.size)
     arr[0,7] = 100
-    print(arr)
-    print(arr.size)
-    arr[0,19] = 200
-    print(arr)
-    print(arr.size)
-    arr.clear()
-    print(arr)
-    print(arr.size)
     arr = DynArrNp2d((4,4), "float32")
-    print(arr)
-    print(arr.size)
     arr[:9,5:7] = 11
-    print(arr)
-    print(arr.size)
+    arr = DynArrNp2d((4,4), "float32")
+    arr[3:6,3:6] = 1
