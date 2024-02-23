@@ -13,7 +13,7 @@ class DynArrNp1d:
     def __init__(self, size, dtype):
 
         self.dtype = dtype  # int32 or float32
-        self.n = size       # just for speed, avoid frequent call len(), .shape[]
+        self.n = size       # avoid frequent call len(), .shape[]
         self.A = self._make(self.n)
 
     def __len__(self):
@@ -27,24 +27,18 @@ class DynArrNp1d:
 
     def __getitem__(self, key):
 
-        print("#### __getitem__ ####")
         try:
             self._dynamic_array_resize(key)
         except Exception as err:
-            print("Error : index out of bound for the key =  ", key)
             print(err)
-        # return array value with original key(not clipped)
         return self.A[key]
 
     def __setitem__(self, key, value):
 
-        print("#### __setitem__ ####")
         try:
             self._dynamic_array_resize(key)
         except Exception as err:
-            print("Error : index out of bound for the key =  ", key)
             print(err)
-        # set value to array with original key(not clipped)
         self.A[key] = value
 
     def _get_indices(self, key):
@@ -57,35 +51,30 @@ class DynArrNp1d:
         if key.step == None: istep_ = 1
         else: istep_ = key.step
         key = slice(istart_, istop_, istep_)
-        print("Info : slice input =  ", key)
 
         # this is to handle negative index
-        # key_ is clipped slice to self.n length
         istart_, istop_, istep_ = key.indices(self.n)
         key_ = slice(istart_, istop_, istep_)
-        print("Info : slice input normalized =  ", key_)
 
         return key, key_
 
     def _dynamic_array_resize(self, key):
         
         # this is to handle None, negative and out-of-bound index
-        if isinstance(key, slice):            
-            # find maximum of slice size
+        if isinstance(key, slice):
             key0, key_ = self._get_indices(key)
             maxindex_ = max(abs(key0.start), abs(key0.stop), \
                             abs(key_.start), abs(key_.stop))
             while maxindex_ + 1 > self.n:
                 self._resize(int(2 * self.n))
-                ### this is for debugging only
-                _, key_ = self._get_indices(key)
-                print("Info : slice input normalized after array resized =  ", key_)
+
         # this is to handle list, numpy array as index
-        elif isinstance(key, (list, np.ndarray)):
+        elif isinstance(key, (list, tuple, np.ndarray)):
             key_ = np.asarray(key)
             key_[key_ < 0] += self.n
             while (key_ > self.n - 1).any():
                 self._resize(int(2 * self.n))
+        
         # handling negative single index
         else:            
             if key < 0:
@@ -97,7 +86,6 @@ class DynArrNp1d:
 
         self.A = np.pad(self.A, (0, size))
         self.n = len(self.A)
-        print("Info : array resized")
 
     def _make(self, size):
 
@@ -140,42 +128,18 @@ class DynArrNp2d:
 
     def __getitem__(self, key):
 
-        print("#### __getitem__ ####")
-        for axis, idx in enumerate(key):
-            try:
-                # this is to handle None, negative and out-of-bound index
-                if isinstance(idx, slice):
-                    self._dynamic_array_resize(axis, idx)
-                # handling negative single index
-                else:
-                    if idx < 0:
-                        idx += self.size[axis]
-                    while idx + 1 > self.size[axis]:
-                        self._resize(axis, int(2*self.size[axis]))
-            except Exception as err:
-                print(f"Error : index out of bound for key = {key}")
-                print(err)
-        # return value with original key(not clipped)
+        try:
+            self._dynamic_array_resize(key)
+        except Exception as err:
+            print(err)
         return self.A[key]
 
     def __setitem__(self, key, value):
 
-        print("#### __setitem__ ####")
-        for axis, idx in enumerate(key):
-            try:
-                # this is to handle None, negative and out-of-bound index
-                if isinstance(idx, slice):                    
-                    self._dynamic_array_resize(axis, idx)
-                # handling negative single index
-                else:                    
-                    if idx < 0:
-                        idx += self.size[axis]
-                    while idx + 1 > self.size[axis]:
-                        self._resize(axis, int(2*self.size[axis]))
-            except Exception as err:
-                print(f"Error : index out of bound for key = {key}")
-                print(err)
-        # set value to array with original key(not clipped)
+        try:
+            self._dynamic_array_resize(key)
+        except Exception as err:
+            print(err)
         self.A[key] = value
 
     def _get_indices(self, axis, key):
@@ -188,33 +152,51 @@ class DynArrNp2d:
         if key.step == None: istep_ = 1
         else: istep_ = key.step
         key = slice(istart_, istop_, istep_)
-        print("Info : slice input =  ", key)
 
         # this is to handle negative index
-        # key_ is clipped slice to self.n length
         istart_, istop_, istep_ = key.indices(self.size[axis])
         key_ = slice(istart_, istop_, istep_)
-        print("Info : slice input normalized =  ", key_)
 
         return key, key_
+    
+    def _check_idx_2d(self, axis, idx):
 
-    def _dynamic_array_resize(self, axis, key):
-        key0, key_ = self._get_indices(axis, key)
-        # find maximum of slice size
-        maxindex_ = max(abs(key0.start), abs(key0.stop), \
-                        abs(key_.start), abs(key_.stop))
-        while maxindex_ + 1 > self.size[axis]:
-            self._resize(axis, int(2*self.size[axis]))
-            ### this is for debugging only
-            _, key_ = self._get_indices(axis, key)
-            print("Info : slice input normalized after array resized =  ", key_)
+        if isinstance(idx, slice):
+            key0, key1 = self._get_indices(axis, idx)
+            maxindex_ = max(abs(key0.start), abs(key0.stop), \
+                            abs(key1.start), abs(key1.stop))
+            while maxindex_ + 1 > self.size[axis]:
+                self._resize(axis, int(2*self.size[axis]))
+        else:
+            # handling negative single index
+            if idx < 0:
+                idx += self.size[axis]
+            while idx + 1 > self.size[axis]:
+                self._resize(axis, int(2*self.size[axis]))
 
+    def _dynamic_array_resize(self, key):
+        
+        key_ = np.asarray(key)        
+        if isinstance(key, list):
+            # when key is list, all elements are row index
+            for elem in key_.flatten():
+                if elem > self.size[0]:
+                    self._resize(0, int(2*self.size[0]))
+        elif isinstance(key, tuple):            
+            for axis, idx in enumerate(key):
+                if isinstance(idx, (list, tuple, np.ndarray)):
+                    for val in idx:
+                        self._check_idx_2d(axis, val)
+                else:
+                    self._check_idx_2d(axis, idx)
+        else:
+            raise IndexError
+        
     def _resize(self, axis, size):
 
         if axis == 0: self.A = np.pad(self.A, ((0, size),(0, 0)))    # pad row
         if axis == 1: self.A = np.pad(self.A, ((0, 0),(0, size)))    # pad col
         self.size = tuple(map(int, self.A.shape))
-        print("Info : array resized")
 
     def _make(self):
 
@@ -226,28 +208,13 @@ class DynArrNp2d:
 
 if __name__ == "__main__":
 
-    #
     # test numpy 1d array
-    #
-
     arr = DynArrNp1d(10, "int32")
-    arr[50:54] += [10,20,30,40]
-    arr[-150:-154:-1] += [-10,-20,-30,-40]
-    arr.trim()
+    arr[11:15] += [10,20,30,40]
+    print(arr)
 
-    arr = DynArrNp1d(10, "float32")
-    key = np.arange(30, 50)
-    key = [20, 21, 22]    
-    arr[key]
-    arr[key] = 99.1
-
-    #
     # test numpy 2d array
-    #
-
-    arr = DynArrNp2d((4,4), "float32")
-    arr[0,7] = 100
-    arr = DynArrNp2d((4,4), "float32")
-    arr[:9,5:7] = 11
-    arr = DynArrNp2d((4,4), "float32")
-    arr[3:6,3:6] = 1
+    arr = DynArrNp2d((4,4), "float32")    
+    arr[6,0:6] = 10.123
+    arr[(4,7,10),(10,12,14)] = 20.123
+    print(arr)
