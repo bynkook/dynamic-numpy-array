@@ -62,9 +62,9 @@ class DynArrNp1d:
         
         # this is to handle None, negative and out-of-bound index
         if isinstance(key, slice):
-            key0, key_ = self._get_indices(key)
+            key0, key1 = self._get_indices(key)
             maxindex_ = max(abs(key0.start), abs(key0.stop), \
-                            abs(key_.start), abs(key_.stop))
+                            abs(key1.start), abs(key1.stop))
             while maxindex_ + 1 > self.n:
                 self._resize(int(2 * self.n))
 
@@ -159,19 +159,19 @@ class DynArrNp2d:
 
         return key, key_
     
-    def _check_idx_2d(self, axis, idx):
+    def _check_idx_2d(self, axis, key):
 
-        if isinstance(idx, slice):
-            key0, key1 = self._get_indices(axis, idx)
+        if isinstance(key, slice):
+            key0, key1 = self._get_indices(axis, key)
             maxindex_ = max(abs(key0.start), abs(key0.stop), \
                             abs(key1.start), abs(key1.stop))
             while maxindex_ + 1 > self.size[axis]:
                 self._resize(axis, int(2*self.size[axis]))
         else:
             # handling negative single index
-            if idx < 0:
-                idx += self.size[axis]
-            while idx + 1 > self.size[axis]:
+            if key < 0:
+                key += self.size[axis]
+            while key + 1 > self.size[axis]:
                 self._resize(axis, int(2*self.size[axis]))
 
     def _dynamic_array_resize(self, key):
